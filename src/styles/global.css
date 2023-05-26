@@ -22,8 +22,7 @@ html, body {
 
 .sl-toast-stack {
   right: 0;
-  bottom: 0;
-  top: auto;
+  top: 0;
 }
 
 @media (prefers-color-scheme: dark) {

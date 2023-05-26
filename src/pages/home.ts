@@ -1,4 +1,5 @@
 import { LitElement, css, html, unsafeCSS } from 'lit';
+import { when } from 'lit/directives/when.js';
 import { property, customElement } from 'lit/decorators.js';
 
 import '../components/global.js'
@@ -8,17 +9,55 @@ export class PageHome extends LitElement {
 
   constructor() {
     super();
+    this.decks = [];
+    datastore.ready.then(async () => {
+      this.decks = await datastore.getDecks();
+      this.requestUpdate();
+    });
   }
 
   static get styles() {
     return [
       css`
 
-      :host > * {
+      /* :host > * {
         max-width: var(--content-max-width);
+      } */
+
+      #view_header {
+        position: sticky;
+        top: 0;
+        max-width: none;
+        padding: 1.1em 1.2em 1em;
+        background: rgba(44 44 49 / 50%);
+        border-bottom: 1px solid rgba(0 0 0 / 50%);
+      }
+
+      #decks {
+        margin: 2em;
+      }
+
+      #decks sl-card {
+        max-width: 300px;
+        margin: 1em;
+      }
+
+      #decks sl-card::part(image) {
+        border: 1px solid rgba(255 255 255 / 10%);
+      }
+      #decks sl-card h3 {
+        margin-top: 0;
+      }
+
+      #create_deck_name {
+        margin-bottom: 1em;
       }
 
     `];
+  }
+
+  $query(selector){
+    return this.renderRoot.querySelector(selector);
   }
 
   async firstUpdated() {
@@ -33,44 +72,115 @@ export class PageHome extends LitElement {
     console.log('Home page is hiding');
   }
 
+  async createDeck(name, description){
+    name = name.trim();
+    description = description.trim();
+    if (!name) {
+      DOM.fireEvent(this, 'app-notify', {
+        composed: true,
+        detail: {
+          variant: 'danger',
+          duration: 4000,
+          message: 'You must provide a name for your deck'
+        }
+      })
+    }
+    else {
+      try {
+const { record } = datastore.createDeck({
+name,
+description,
+markdown: `
+## Slide 1
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+---
+## Slide 2
+Augue neque gravida in fermentum. In mollis nunc sed id semper.
+---
+## Slide 3
+Tellus mauris a diam maecenas sed. At imperdiet dui accumsan sit amet.
+`
+});
+        this.decks.push(record);
+        DOM.fireEvent(this, 'app-notify', {
+          composed: true,
+          detail: {
+            variant: 'success',
+            duration: 4000,
+            message: `Deck created: ${name}`
+          }
+        })
+        this.requestUpdate();
+        this.closeModal('#create_deck_modal');
+      }
+      catch(e) {
+        DOM.fireEvent(this, 'app-notify', {
+          composed: true,
+          detail: {
+            variant: 'danger',
+            duration: 4000,
+            message: 'There was an error in creating your deck'
+          }
+        })
+      }
+    }
+  }
+
+  openModal(selector){
+    this.renderRoot.querySelector(selector).show()
+  }
+
+  closeModal(selector){
+    this.renderRoot.querySelector(selector).hide()
+  }
+
   render() {
     return html`
-      <h2>Introduction</h2>
-      <p>
-        This is a barebones template for building a <strong>Decentralized Web App (DWA)</strong>. To understand what a DWA is, it helps to know what they are built on top of: the standard <strong>Progressive Web App (PWA)</strong> model supported by all major Web browsers. PWAs are web apps that provide users with an experience rivaling native apps by leveraging new capabilities that enable them to be installed like a native app and have the same look and behavior of native apps. This is a helpful primer to learn about PWAs and the power they give to app developers: <a href="https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Tutorials/js13kGames/Introduction">Introduction to PWAs</a>
-      </p>
-      <p>
-        <strong>Decentralized Web Apps (DWAs)</strong> are PWAs that ate their Wheaties. DWAs upgrade the Web with a core set of decentralized identity, trust, and data storage/exchange capabilities that include:
-      </p>
-      <ul>
-        <li><strong>Decentralized Identifiers (DIDs)</strong> - a standard for identifiers (think: user handles) that you own and control, not some company or domain registrar.</li>
-        <li><strong>Verifiable Credentials (VCs)</strong> - a standard mechanism for creating signed statements you can independently verify, to help form trust and reputation between people and businesses.</li>
-        <li><strong>Decentralized Web Nodes (DWeb Nodes)</strong> - an emerging standard for personal data storage and exchange that allows your DWA to store data with the user.</li>
-      </ul>
+      <header id="view_header">
+        <sl-button-group id="view_actions">
+          <sl-button variant="primary" size="small" @click="${e => this.openModal('#create_deck_modal')}">
+            <sl-icon slot="prefix" name="plus-lg"></sl-icon>
+            New Deck
+          </sl-button>
+        </sl-button-group>
+      </header>
 
-      <h2>Tech used in this template:</h2>
+      <div id="decks">
+        ${
+          this.decks.map(deck => {
+            return html`
+              <sl-card class="card-overview">
+                <!-- <img
+                  slot="image"
+                  src="https://images.unsplash.com/photo-1559209172-0ff8f6d49ff7?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=500&q=80"
+                /> -->
 
-      <ul>
-        <li>
-          <a href="https://www.typescriptlang.org/" target="_blank">TypeScript</a>
-        </li>
+                <h3>${deck.deckData.name}</h3>
+                <p></p>
+                <small>Created: ${new Date(deck.dateCreated).toLocaleDateString()}</small>
 
-        <li>
-          <a href="https://lit.dev" target="_blank">Lit (app framework)</a>
-        </li>
+                <div slot="footer">
+                  <sl-button variant="success" size="small" href="/viewer?deck=${deck.id}">
+                    <sl-icon slot="prefix" name="eye-fill"></sl-icon>
+                    View Deck
+                  </sl-button>
+                  <sl-button variant="primary" size="small" href="/editor?deck=${deck.id}">
+                    <sl-icon slot="prefix" name="pencil-fill"></sl-icon>
+                    Edit Deck
+                  </sl-button>
+                </div>
+              </sl-card>
+            `
+          })
+        }
+      </div>
 
-        <li>
-          <a href="https://shoelace.style/" target="_blank">Shoelace (components)</a>
-        </li>
-
-        <li>
-          <a href="https://vaadin.com/docs/latest/components" target="_blank">Vaadin (components)</a>
-        </li>
-
-        <li>
-          <a href="https://developer.tbd.website/docs/web5/" target="_blank">Web5 (SDK)</a>
-        </li>
-      </ul>
+      <sl-dialog id="create_deck_modal" label="Create a new deck" class="dialog-overview">
+        <sl-input id="create_deck_name" label="Enter a name for your deck (required)" required></sl-input>
+        <sl-textarea id="create_deck_desc" label="Enter a description for your deck"></sl-textarea>
+        <sl-button slot="footer" variant="danger" @click="${e => this.closeModal('#create_deck_modal')}">Close</sl-button>
+        <sl-button slot="footer" variant="success" @click="${e => this.createDeck(this.$query('#create_deck_name').value, this.$query('#create_deck_desc').value)}">Create</sl-button>
+      </sl-dialog>
     `;
   }
 }

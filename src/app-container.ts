@@ -14,8 +14,8 @@ import '@vaadin/app-layout/theme/lumo/vaadin-drawer-toggle.js';
 import '@vaadin/tabs/theme/lumo/vaadin-tabs.js';
 
 import './pages/home';
-import './pages/examples';
-import './pages/settings';
+import './pages/editor';
+import './pages/viewer';
 
 import { Web5 } from '@tbd54566975/web5';
 const { web5, did: userDID } = await Web5.connect();
@@ -23,11 +23,11 @@ localStorage.userDID = JSON.stringify(userDID);
 
 console.log(userDID);
 
-// import { Datastore } from './utils/datastore.js';
-// const datastore = globalThis.datastore = new Datastore({
-//   web5: web5,
-//   did: userDID
-// })
+import { Datastore } from './utils/datastore.js';
+const datastore = globalThis.datastore = new Datastore({
+  web5: web5,
+  did: userDID
+})
 
 const BASE_URL: string = (import.meta.env.BASE_URL).length > 2 ? (import.meta.env.BASE_URL).slice(1, -1) : (import.meta.env.BASE_URL);
 
@@ -102,7 +102,6 @@ export class AppContainer extends LitElement {
         box-sizing: border-box;
         height: 100%;
         width: 100%;
-        padding: 2.5em;
         opacity: 0;
         visibility: hidden;
         transition: visibility 0.3s, opacity 0.3s ease;
@@ -173,12 +172,12 @@ export class AppContainer extends LitElement {
           component: '#home'
         },
         {
-          path: '/examples',
-          component: '#examples'
+          path: '/editor',
+          component: '#editor'
         },
         {
-          path: '/settings',
-          component: '#settings'
+          path: '/viewer',
+          component: '#viewer'
         }
       ]
     });
@@ -207,39 +206,39 @@ export class AppContainer extends LitElement {
   render() {
     return html`
 
-      <vaadin-app-layout id="app_layout">
+      <vaadin-app-layout id="app_layout" @drawer-opened-changed="${e => DOM.fireEvent(document, 'drawer-opened-changed', { composed: true })}">
 
         <vaadin-drawer-toggle slot="navbar">
           <sl-icon name="list"></sl-icon>
         </vaadin-drawer-toggle>
 
-        <h1 slot="navbar">DWA Starter</h1>
+        <h1 slot="navbar">5lides</h1>
 
         <vaadin-tabs slot="drawer" orientation="vertical">
           <vaadin-tab>
             <a tabindex="-1" href="/">
-              <sl-icon name="house"></sl-icon>
+              <sl-icon name="grid-fill"></sl-icon>
               <span>Home</span>
             </a>
           </vaadin-tab>
           <vaadin-tab>
-            <a tabindex="-1" href="/examples">
-              <sl-icon name="grid"></sl-icon>
-              <span>Examples</span>
+            <a tabindex="-1" href="/editor">
+              <sl-icon name="pencil-fill"></sl-icon>
+              <span>Editor</span>
             </a>
           </vaadin-tab>
           <vaadin-tab>
-            <a tabindex="-1" href="/settings">
-              <sl-icon name="sliders"></sl-icon>
-              <span>Settings</span>
+            <a tabindex="-1" href="/viewer">
+              <sl-icon name="eye-fill"></sl-icon>
+              <span>Viewer</span>
             </a>
           </vaadin-tab>
         </vaadin-tabs>
 
         <main id="pages">
           <page-home id="home" scroll></page-home>
-          <page-examples id="examples" scroll></page-examples>
-          <page-settings id="settings" scroll></page-settings>
+          <page-editor id="editor" scroll></page-editor>
+          <page-viewer id="viewer" scroll></page-viewer>
         </main>
 
       </vaadin-app-layout>

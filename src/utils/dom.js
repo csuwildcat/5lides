@@ -15,6 +15,14 @@ var DOM = {
     })
   })),
   wait: ms => new Promise(resolve => setTimeout(() => resolve(), ms)),
+  throttle: (fn, delay, ...args) => {
+    if (!fn) return;
+    let last = fn._lastThrottled = fn._lastThrottled || 0;
+    const now = new Date().getTime();
+    if (now - last < delay) return;
+    fn._lastThrottled = now;
+    return fn(...args);
+  },
   fireEvent(node, type, options = {}){
     return node.dispatchEvent(new CustomEvent(type, Object.assign({
       bubbles: true
