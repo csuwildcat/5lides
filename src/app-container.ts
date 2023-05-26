@@ -21,8 +21,6 @@ import { Web5 } from '@tbd54566975/web5';
 const { web5, did: userDID } = await Web5.connect();
 localStorage.userDID = JSON.stringify(userDID);
 
-console.log(userDID);
-
 import { Datastore } from './utils/datastore.js';
 const datastore = globalThis.datastore = new Datastore({
   web5: web5,

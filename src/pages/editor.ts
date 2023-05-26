@@ -62,20 +62,29 @@ export class PageEditor extends LitElement {
   }
 
   async firstUpdated() {
+    let initialized = false;
+    const boundSave = this.saveDeck.bind(this);
+    this.editor = this.$query('#code_editor');
+    this.editor.addEventListener('change', e => {
+      if (initialized) {
+        DOM.throttle(boundSave, 2000);
+      }
+      this.setPreviewContent(this.editor.getValue())
+      initialized = true;
+    });
     document.addEventListener('drawer-opened-changed', e => {
       setTimeout(() => this.refreshPreviewLayout(), 250);
     });
   }
 
   async onPageEnter(){
+    console.log('onPageEnter');
     const deckId = new URLSearchParams(location.search).get('deck')
     if (deckId !== this?.deck?.id) {
       this.deck = await datastore.getDeck(deckId);
     }
     if (this.deck) {
-      console.log(this.deck);
-      this.$query('#code_editor')?.setValue(this.deck.deckData.markdown);
-      this.setPreviewContent(this.deck.deckData.markdown);
+      this.editor.setValue(this.deck.deckData.markdown);
     }
     if (!this.preview) {
       this.preview = new Reveal(this.$query('#deck_preview'), {
@@ -89,17 +98,17 @@ export class PageEditor extends LitElement {
   }
 
   async onPageLeave(){
-    console.log('Examples page is hiding');
+
   }
 
   async setPreviewContent(content){
-    let currentSlide = this?.preview?.getIndices() || { h: 0, v: 0 };
+    const currentSlide = this?.preview?.getIndices() || { h: 0, v: 0 };
     const container = this.$query('#deck_preview .slides');
-    container.innerHTML = `
-      <section data-markdown>
-        <textarea data-template>${content}</textarea>
-      </section>
-    `;
+          container.innerHTML = `
+            <section data-markdown>
+              <textarea data-template>${content}</textarea>
+            </section>
+          `;
     const plugin = this?.preview?.getPlugin('markdown');
     if (plugin){
       plugin.processSlides(container);
@@ -113,11 +122,21 @@ export class PageEditor extends LitElement {
     this?.preview?.sync();
   }
 
+  async saveDeck(){
+    if (!this.deck || !this.editor) return;
+    console.log('save');
+    this.deck.update({
+      data: Object.assign(this.deck.deckData, {
+        markdown: this.editor.getValue()
+      })
+    })
+  }
+
   render() {
     return html`
       <sl-split-panel id="editor_panels" @sl-reposition="${e => this.refreshPreviewLayout()}">
         <div slot="start">
-          <code-editor id="code_editor" language="markdown" @change="${e => this.setPreviewContent(e.detail.editor.getValue())}"></code-editor>
+          <code-editor id="code_editor" language="markdown"></code-editor>
         </div>
         <div slot="end">
           <div id="deck_preview" class="reveal">

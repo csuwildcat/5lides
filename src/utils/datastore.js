@@ -70,11 +70,12 @@ class Datastore {
   }
 
   async getDeck(deckId){
-    const { record } = await this.dwn.records.read({
+    const { record, status } = await this.dwn.records.read({
       message: {
         recordId: deckId
       }
     });
+    if (status.code !== 200) return false;
     record.deckData = await record.data.json();
     return record;
   }

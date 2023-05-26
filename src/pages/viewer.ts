@@ -30,15 +30,15 @@ export class PageViewer extends LitElement {
   }
 
   async firstUpdated() {
-    console.log('This is your settings page');
+
   }
 
   async onPageEnter(){
-    console.log('Settings page is showing');
+
   }
 
   async onPageLeave(){
-    console.log('Settings page is hiding');
+
   }
 
   render() {

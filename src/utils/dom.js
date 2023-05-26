@@ -15,7 +15,7 @@ var DOM = {
     })
   })),
   wait: ms => new Promise(resolve => setTimeout(() => resolve(), ms)),
-  throttle: (fn, delay, ...args) => {
+  throttle(fn, delay, ...args){
     if (!fn) return;
     let last = fn._lastThrottled = fn._lastThrottled || 0;
     const now = new Date().getTime();

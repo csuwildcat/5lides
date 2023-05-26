@@ -61,15 +61,15 @@ export class PageHome extends LitElement {
   }
 
   async firstUpdated() {
-    console.log('This is your home page');
+
   }
 
   async onPageEnter(){
-    console.log('Home page is showing');
+
   }
 
   async onPageLeave(){
-    console.log('Home page is hiding');
+
   }
 
   async createDeck(name, description){
