@@ -63,11 +63,10 @@ export class PageEditor extends LitElement {
 
   async firstUpdated() {
     let initialized = false;
-    const boundSave = this.saveDeck.bind(this);
     this.editor = this.$query('#code_editor');
     this.editor.addEventListener('change', e => {
       if (initialized) {
-        DOM.throttle(boundSave, 2000);
+        this.saveDeck().then(record => console.log(record))
       }
       this.setPreviewContent(this.editor.getValue())
       initialized = true;
@@ -88,12 +87,11 @@ export class PageEditor extends LitElement {
     }
     if (!this.preview) {
       this.preview = new Reveal(this.$query('#deck_preview'), {
-        embedded: true,
-        keyboardCondition: 'focused' // only react to keys when focused
-      })
-      this.preview.initialize({
         plugins: [ Markdown ],
-      });
+        embedded: true,
+        keyboardCondition: 'focused', // only react to keys when focused
+      })
+      this.preview.initialize();
     }
   }
 
@@ -117,20 +115,20 @@ export class PageEditor extends LitElement {
     }
   }
 
-  refreshPreviewLayout(throttle = 50){
-    DOM.throttle(this?.preview?.layout, throttle);
-    this?.preview?.sync();
-  }
+  refreshPreviewLayout = DOM.throttle(() => {
+    this?.preview?.layout()
+    this?.preview?.sync()
+  }, 50)
 
-  async saveDeck(){
+  saveDeck = DOM.throttle(() => {
     if (!this.deck || !this.editor) return;
     console.log('save');
-    this.deck.update({
+    return this.deck.update({
       data: Object.assign(this.deck.deckData, {
         markdown: this.editor.getValue()
       })
     })
-  }
+  }, 2000)
 
   render() {
     return html`

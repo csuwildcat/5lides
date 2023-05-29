@@ -41,16 +41,6 @@ export class AppContainer extends LitElement {
         height: 100%;
       }
 
-      /* #app_header {
-        padding: 0.9em 1.1em;
-        color: #000;
-        background-color: rgb(255, 236, 25);
-        background: rgb(37 39 42);
-        border-bottom: 1px solid #111;
-        box-shadow: rgba(0, 0, 0, 0.15) 0px 1px 3px 0px;
-        z-index: 100;
-      } */
-
       vaadin-drawer-toggle {
         display: flex;
         height: var(--lumo-size-m);
@@ -84,10 +74,6 @@ export class AppContainer extends LitElement {
 
       vaadin-app-layout vaadin-tab a :first-child {
         margin: 0 0.5em 0 0;
-      }
-
-      vaadin-app-layout [content] {
-
       }
 
       main {
@@ -161,7 +147,10 @@ export class AppContainer extends LitElement {
     super();
 
     this.router = new AppRouter(this, {
-      onRouteChange: () => {
+      onRouteChange: (enteringRoute) => {
+        if (this.nav){
+          this.nav.selected = [...this.nav.children].indexOf(this.renderRoot.querySelector(`vaadin-tab a[href="${enteringRoute.path}"]`).parentNode)
+        }
         this.renderRoot.querySelector('#app_layout')?.__closeOverlayDrawer()
       },
       routes: [
@@ -185,6 +174,7 @@ export class AppContainer extends LitElement {
   }
 
   firstUpdated() {
+    this.nav = this.renderRoot.querySelector('#global_nav');
     DOM.skipFrame(() => this.router.goto(location.pathname));
   }
 
@@ -212,7 +202,7 @@ export class AppContainer extends LitElement {
 
         <h1 slot="navbar">5lides</h1>
 
-        <vaadin-tabs slot="drawer" orientation="vertical">
+        <vaadin-tabs id="global_nav" slot="drawer" orientation="vertical">
           <vaadin-tab>
             <a tabindex="-1" href="/">
               <sl-icon name="grid-fill"></sl-icon>

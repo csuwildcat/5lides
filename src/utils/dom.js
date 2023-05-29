@@ -1,3 +1,4 @@
+import { findConfigFile } from "typescript";
 
 var DOM = {
   ready: new Promise(resolve => {
@@ -15,13 +16,26 @@ var DOM = {
     })
   })),
   wait: ms => new Promise(resolve => setTimeout(() => resolve(), ms)),
-  throttle(fn, delay, ...args){
-    if (!fn) return;
-    let last = fn._lastThrottled = fn._lastThrottled || 0;
-    const now = new Date().getTime();
-    if (now - last < delay) return;
-    fn._lastThrottled = now;
-    return fn(...args);
+  throttle(fn, delay) {
+    let last = 0;
+    let timeout;
+    return function(...args) {
+      return new Promise(resolve => {
+        const now = Date.now();
+        const diff = now - last;
+        clearTimeout(timeout);
+        if (diff >= delay || last === 0) {
+          resolve(fn(...args));
+          last = now;
+        }
+        else {
+          timeout = setTimeout(() => {
+            resolve(fn(...args));
+            last = Date.now();
+          }, delay - diff);
+        }
+      })
+    };
   },
   fireEvent(node, type, options = {}){
     return node.dispatchEvent(new CustomEvent(type, Object.assign({
